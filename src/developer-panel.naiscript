@@ -1,0 +1,91 @@
+/*---
+compatibilityVersion: naiscript-1.0
+id: 7c3f1d2e-9a64-4b1f-8e2a-1d0c5b6f4a90
+name: Developer Panel
+createdAt: 1750032000000
+updatedAt: 1750032000000
+version: 0.1.0
+author: DD
+description: Proof of concept Developer Panel. Shows a text display and a text input below the editor. Submitting text in the input updates the display to match.
+memoryLimit: 8
+---*/
+
+/// <reference path="../external/script-types.d.ts" />
+
+// Proof of concept: a Developer Panel UI extension for NovelAI.
+//
+// It registers a script panel (opened from the panel list below the editor)
+// containing a single text display and a single text input. When text is
+// submitted via the input (Enter key), the text display is updated to show
+// exactly what was sent.
+
+const PANEL_ID = "developerPanel";
+const DISPLAY_ID = "developerPanelDisplay";
+const INPUT_ID = "developerPanelInput";
+const EMPTY_DISPLAY = "(nothing sent yet)";
+
+// Build the panel definition. `displayText` is the current value shown in the
+// text display; it changes as the user submits input.
+function buildPanel(displayText: string): UIExtensionScriptPanel {
+    return {
+        type: "scriptPanel",
+        id: PANEL_ID,
+        name: "Developer Panel",
+        iconId: "code",
+        content: [
+            {
+                type: "column",
+                style: { alignItems: "stretch", gap: "12px", padding: "12px" },
+                content: [
+                    {
+                        type: "text",
+                        text: "Developer Panel",
+                        style: { fontSize: "16px", fontWeight: "bold" },
+                    },
+                    {
+                        // The text display. It has an id so it can be updated
+                        // in place via api.v1.ui.updateParts.
+                        type: "box",
+                        style: {
+                            padding: "12px",
+                            minHeight: "40px",
+                            display: "flex",
+                            alignItems: "center",
+                        },
+                        content: [
+                            {
+                                type: "text",
+                                id: DISPLAY_ID,
+                                text: displayText,
+                                style: {
+                                    whiteSpace: "pre-wrap",
+                                    wordBreak: "break-word",
+                                },
+                            },
+                        ],
+                    },
+                    {
+                        // The text input. On submit we update the display above
+                        // to show exactly what was sent.
+                        type: "textInput",
+                        id: INPUT_ID,
+                        label: "Send text to the display:",
+                        placeholder: "Type here and press Enter...",
+                        onSubmit: (value: string) => {
+                            const next = value.length > 0 ? value : EMPTY_DISPLAY;
+                            api.v1.ui.updateParts([
+                                { id: DISPLAY_ID, type: "text", text: next },
+                            ]);
+                            api.v1.log("Developer Panel display updated:", next);
+                        },
+                    },
+                ],
+            },
+        ],
+    };
+}
+
+(async () => {
+    await api.v1.ui.register([buildPanel(EMPTY_DISPLAY)]);
+    api.v1.log("Developer Panel registered.");
+})();
