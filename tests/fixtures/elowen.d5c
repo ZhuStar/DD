@@ -1,0 +1,144 @@
+D5C 1
+
+Character "Elowen Vale" {
+	Game dnd5e-2014
+	Player "Julian"
+	Xp 6500
+	Inspiration false
+
+	Origin {
+		Species @srd2014:race/elf
+		Subspecies @srd2014:subrace/high-elf
+		Background @srd2014:background/sage
+		Alignment "Neutral Good"
+	}
+
+	Levels {
+		Level 1 {
+			Class @srd2014:class/wizard
+			Subclass none
+			HitPoints 6
+		}
+
+		Level 2 {
+			Class @srd2014:class/wizard
+			HitPoints 4
+		}
+
+		Level 3 {
+			Class @srd2014:class/wizard
+			Subclass @srd2014:subclass/evocation
+			HitPoints 5
+		}
+
+		Level 4 {
+			Class @srd2014:class/wizard
+			HitPoints 4
+			Choice ability-score-improvement {
+				Intelligence +2
+			}
+		}
+
+		Level 5 {
+			Class @srd2014:class/wizard
+			HitPoints 3
+		}
+	}
+
+	Abilities {
+		Strength 8
+		Dexterity 14
+		Constitution 13
+		Intelligence 17
+		Wisdom 12
+		Charisma 10
+	}
+
+	Choices {
+		Skill @srd2014:skill/arcana from background
+		Skill @srd2014:skill/history from background
+		Skill @srd2014:skill/investigation from class
+		Skill @srd2014:skill/insight from class
+
+		Language @srd2014:language/common
+		Language @srd2014:language/elvish
+		Language @srd2014:language/draconic
+
+		Cantrip @srd2014:spell/fire-bolt
+		Cantrip @srd2014:spell/mage-hand
+		Cantrip @srd2014:spell/prestidigitation
+		Cantrip @srd2014:spell/minor-illusion from species
+	}
+
+	Spells {
+		Spellbook {
+			@srd2014:spell/magic-missile
+			@srd2014:spell/shield
+			@srd2014:spell/detect-magic
+			@srd2014:spell/mage-armor
+			@srd2014:spell/misty-step
+			@srd2014:spell/scorching-ray
+			@srd2014:spell/fireball
+			@srd2014:spell/counterspell
+		}
+
+		Prepared {
+			@srd2014:spell/magic-missile
+			@srd2014:spell/shield
+			@srd2014:spell/mage-armor
+			@srd2014:spell/misty-step
+			@srd2014:spell/fireball
+			@srd2014:spell/counterspell
+		}
+	}
+
+	Inventory {
+		Item "Quarterstaff" {
+			Ref @srd2014:equipment/quarterstaff
+			Equipped true
+			Quantity 1
+		}
+
+		Item "Spellbook" {
+			Ref @srd2014:equipment/spellbook
+			Quantity 1
+		}
+
+		Currency {
+			Cp 0
+			Sp 5
+			Ep 0
+			Gp 42
+			Pp 0
+		}
+	}
+
+	State {
+		CurrentHp 23
+		TemporaryHp 0
+
+		DeathSaves {
+			Successes 0
+			Failures 0
+		}
+
+		Used {
+			SpellSlot 1 2
+			SpellSlot 2 1
+			HitDice d6 1
+		}
+
+		Conditions {
+		}
+	}
+
+	Overrides {
+		ArmorClass 15 because "Mage Armor is currently active"
+		Speed walking 30
+	}
+
+	Notes {
+		Appearance "Silver hair, ink-stained fingers, blue travelling cloak."
+		Personality "Curious first, cautious second."
+	}
+}

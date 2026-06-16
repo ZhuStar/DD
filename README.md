@@ -1,78 +1,165 @@
-# DD — NovelAI Developer Panel (Proof of Concept)
+# D5C — D&D 5e Character format
 
-A minimal [NovelAI](https://novelai.net) user script that adds a **Developer
-Panel** UI extension below the editor. The panel contains:
+D5C ("D&D 5e Character") is a strict, human-editable text format for storing a
+character's **selected choices and current play state** — not a pre-calculated
+sheet. This package provides the foundation for a future rules engine:
 
-- a **text display**, and
-- a **text input**.
+```
+D5C text → lexer → parser → raw AST → shape validator → normalizer → resolver → resolved graph
+```
 
-When you type text into the input and submit it (press <kbd>Enter</kbd>), the
-text display updates to show exactly what was sent.
+The library deliberately keeps **parsing separate from game rules**. The parser
+understands D5C syntax only; it does not know what a wizard is, whether a spell
+choice is legal, or how to compute AC, spell slots, proficiency bonus, or save
+DCs. Those belong to later layers.
 
-This is a proof of concept for working with NovelAI's scripting / UI extension
-API.
+It is TypeScript-first, has **no runtime dependencies**, and runs its tests on
+Node's built-in test runner via native TypeScript type-stripping (Node ≥ 22.6).
 
-## Files
-
-| Path | Description |
-| --- | --- |
-| `src/developer-panel.naiscript` | The user script. This is the file you load into NovelAI. |
-| `external/script-types.d.ts` | Official NovelAI scripting API type definitions, copied locally for editor autocomplete and type-checking. |
-| `tsconfig.json` | TypeScript config used to type-check the script against the API types. |
-
-> `external/script-types.d.ts` is NovelAI's published type definition file
-> (originally served at `https://novelai.net/scripting/types/script-types.d.ts`).
-> It is vendored here so the script can be developed and type-checked offline.
-
-## How it works
-
-NovelAI runs user scripts in an isolated JavaScript interpreter inside a Web
-Worker. Scripts cannot touch the DOM directly; they build UI by registering
-**UI extensions** through `api.v1.ui`.
-
-The script registers a `scriptPanel` extension. Inside it:
-
-1. A `text` part (with id `developerPanelDisplay`) is the display.
-2. A `textInput` part (with id `developerPanelInput`) is the input. Its
-   `onSubmit` callback fires when the user presses Enter.
-3. On submit, `api.v1.ui.updateParts(...)` updates the display part in place,
-   by id, with the submitted value.
+## Quick start
 
 ```ts
-api.v1.ui.updateParts([
-  { id: "developerPanelDisplay", type: "text", text: submittedValue },
-]);
+import {
+	ParseD5c,
+	NormalizeD5c,
+	ResolveCharacter,
+	RuleRegistry,
+	InMemoryRuleSource,
+} from "./src/index.ts";
+
+const ast = ParseD5c(d5cText); // raw AST with source locations
+const document = NormalizeD5c(ast); // typed character model
+const registry = new RuleRegistry();
+registry.AddSource(new InMemoryRuleSource("srd2014", fakeSrdRules));
+const resolved = await ResolveCharacter(document, registry);
+// resolved.rules.byKey: resolved RuleObjects; resolved.diagnostics: misses, etc.
 ```
 
-## Loading the script in NovelAI
+## The D5C format
 
-1. Open NovelAI and open the **User Scripts** modal (the goose menu in the
-   left sidebar, the Advanced tab of the right sidebar when a story is
-   selected, or press <kbd>Alt</kbd>+<kbd>X</kbd>).
-2. Create a new script and paste the contents of
-   `src/developer-panel.naiscript`.
-3. Enable the script. A **Developer Panel** entry appears in the panel list
-   below the editor — open it to use the display and input.
+A document begins with `D5C <version>` followed by a single `Character` block.
+Values are stored as **references** like `@srd2014:spell/fireball`, never as
+copied compendium text.
 
-## Developing / type-checking
+```
+D5C 1
 
-The `.naiscript` file is a normal TypeScript file with a YAML front-matter
-header inside a leading block comment. To type-check the logic against the
-official API types:
+Character "Elowen Vale" {
+	Game dnd5e-2014
+	Xp 6500
+
+	Origin {
+		Species @srd2014:race/elf
+		Background @srd2014:background/sage
+	}
+
+	Levels {
+		Level 1 {
+			Class @srd2014:class/wizard
+			Subclass none
+			HitPoints 6
+		}
+		Level 4 {
+			Class @srd2014:class/wizard
+			Choice ability-score-improvement {
+				Intelligence +2
+			}
+		}
+	}
+
+	Abilities {
+		Strength 8
+		Intelligence 17
+	}
+
+	Choices {
+		Skill @srd2014:skill/arcana from background
+		Cantrip @srd2014:spell/minor-illusion from species
+	}
+
+	Spells {
+		Spellbook {
+			@srd2014:spell/fireball
+		}
+	}
+
+	State {
+		Used {
+			SpellSlot 1 2
+			HitDice d6 1
+		}
+	}
+
+	Overrides {
+		ArmorClass 15 because "Mage Armor is currently active"
+	}
+}
+```
+
+A complete example is in [`tests/fixtures/elowen.d5c`](tests/fixtures/elowen.d5c).
+
+### Syntax
+
+- **Blocks** group statements in `{ }`. A block may carry a single label:
+  `Level 1 { … }`, `Item "Quarterstaff" { … }`, `Choice ability-score-improvement { … }`.
+- **Fields** are `Name value tail*`, terminated by end of line:
+  `HitPoints 6`, `Speed walking 30`, `ArmorClass 15 because "…"`. Freeform
+  tails are preserved verbatim in the AST; the parser does not interpret them.
+- **List items** are bare references on their own line (used inside `Spellbook`,
+  `Prepared`, `Conditions`).
+- **References**: `@source:type/id` where `source` is a logical namespace
+  (`srd2014`, `homebrew`, `campaign`), not a file path.
+- **Dice**: `d6`, `1d6`, `1d6+1`, `1d20-2`.
+- **Values**: strings (`"…"` with `\" \\ \n \r \t` escapes), numbers, signed
+  numbers (`+2`), booleans, `none`, identifiers, references, dice.
+- **Comments**: `// line` and `# line`.
+
+Syntax errors throw a `D5cParseError` carrying diagnostics with line and column.
+
+## Architecture
+
+| Area | Files | Responsibility |
+| --- | --- | --- |
+| D5C syntax | `src/d5c/lexer.ts`, `parser.ts`, `ast.ts`, `grammar.ts`, `errors.ts` | Tokenize and parse into a raw AST. Rule-agnostic. |
+| Character model | `src/character/model.ts`, `normalize.ts`, `validate.ts` | Typed model, AST→model normalization, shape validation (Layer 2) + a scaffolded rules check (Layer 3). |
+| Rules API | `src/rules/ruleRef.ts`, `ruleObject.ts`, `ruleSource.ts`, `ruleRegistry.ts`, `inMemoryRuleSource.ts`, `ruleResolver.ts` | Source-independent rule references, objects, sources, registry, and reference collection. |
+| Resolve | `src/resolve/resolvedCharacter.ts`, `resolveCharacter.ts` | Walk the model, resolve references through the registry, return a resolved graph plus diagnostics. |
+| Entry point | `src/index.ts` | Public API. |
+
+### Validation layers
+
+1. **Syntax** — lexer/parser (`D5cParseError` with line/column).
+2. **Shape** — `ValidateD5cDocument(ast)` returns diagnostics (valid ability
+   names and numeric scores, numeric level labels, a class per level, numeric
+   currency, ref-only spell lists). Never throws.
+3. **Rules** — scaffolded only. `ValidateCharacterRules(document)` ships one
+   trivial, extensible example (prepared spells must be in the spellbook). Real
+   legality checks (prepared-count limits, class spell legality, multiclass
+   prerequisites, proficiencies) are intentionally not implemented yet.
+
+### Rule sources are abstract
+
+Rules can come from any source — memory, files, a database, network, or a
+campaign package — via the `RuleSource` interface. `RuleRegistry` routes a
+reference to the source owning its namespace; missing rules become
+**diagnostics, not exceptions**. `InMemoryRuleSource` is provided for tests and
+examples. The character parser never touches a `RuleSource`; only the resolver
+does.
+
+## Development
 
 ```sh
-# tsc does not read the .naiscript extension, so check a .ts copy of the body:
-cp src/developer-panel.naiscript /tmp/developer-panel.ts
-npx tsc --noEmit --strict --lib ES2020,DOM \
-  external/script-types.d.ts /tmp/developer-panel.ts
+npm install        # installs TypeScript + @types/node (dev only)
+npm run typecheck  # tsc --noEmit, strict
+npm test           # node --test (native TS, no build step)
 ```
 
-Editors with TypeScript support will pick up the API types automatically via
-the `/// <reference path="../external/script-types.d.ts" />` directive at the
-top of the script.
+The code is written so Node can strip its types directly (no enums, namespaces,
+or parameter properties); `erasableSyntaxOnly` enforces this at typecheck time.
 
-## References
+## Also in this repository
 
-- NovelAI Scripting introduction: <https://docs.novelai.net/en/scripting/introduction/>
-- NovelAI Scripting API reference: <https://docs.novelai.net/en/scripting/api-reference/>
-- Official example scripts: <https://github.com/NovelAI/novelai-script-examples>
+`src/developer-panel.naiscript` is an unrelated earlier proof of concept — a
+NovelAI Developer Panel user script. See
+[`docs/novelai-developer-panel.md`](docs/novelai-developer-panel.md). It is
+excluded from the D5C TypeScript project.

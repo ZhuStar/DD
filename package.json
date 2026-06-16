@@ -1,0 +1,20 @@
+{
+	"name": "d5c",
+	"version": "0.1.0",
+	"description": "Human-readable D&D 5e character format (D5C): lexer, parser, normalizer, and source-independent rule resolver.",
+	"type": "module",
+	"private": true,
+	"engines": {
+		"node": ">=22.6"
+	},
+	"main": "src/index.ts",
+	"scripts": {
+		"typecheck": "tsc -p tsconfig.json",
+		"test": "node --test",
+		"test:watch": "node --test --watch"
+	},
+	"devDependencies": {
+		"@types/node": "^22.19.21",
+		"typescript": "^5.8.0"
+	}
+}
