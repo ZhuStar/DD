@@ -1,0 +1,102 @@
+STC 1
+
+Character "Isabeau Renault" {
+	Game wod-storyteller
+	Player "Julian"
+	Chronicle "By Night"
+
+	Concept {
+		Nature "Architect"
+		Demeanor "Gallant"
+		Concept "Reluctant Investigator"
+	}
+
+	Splat {
+		Gameline @wod-revised:gameline/vampire
+		Clan @wod-revised:clan/tremere
+		Generation 12
+	}
+
+	Attributes {
+		Physical {
+			Strength 2
+			Dexterity 3
+			Stamina 2
+		}
+
+		Social {
+			Charisma 3
+			Manipulation 4
+			Appearance 2
+		}
+
+		Mental {
+			Perception 3
+			Intelligence 4
+			Wits 3
+		}
+	}
+
+	Abilities {
+		Talent @wod-revised:ability/alertness 2
+		Talent @wod-revised:ability/subterfuge 3
+		Skill @wod-revised:ability/stealth 2 specialty "Hiding"
+		Knowledge @wod-revised:ability/occult 3
+		Knowledge @wod-revised:ability/academics 2
+	}
+
+	Advantages {
+		Discipline @wod-revised:discipline/thaumaturgy 2
+		Discipline @wod-revised:discipline/auspex 1
+		Background @wod-revised:background/resources 3
+		Background @wod-revised:background/contacts 2
+	}
+
+	Virtues {
+		Conscience 3
+		SelfControl 2
+		Courage 3
+	}
+
+	Willpower {
+		Rating 5
+		Current 4
+	}
+
+	Path {
+		Name "Humanity"
+		Rating 7
+	}
+
+	Pools {
+		BloodPool {
+			Max 11
+			Current 8
+		}
+	}
+
+	Health {
+		Bashing 1
+		Lethal 0
+		Aggravated 0
+	}
+
+	Experience {
+		Total 35
+		Unspent 7
+	}
+
+	MeritsFlaws {
+		Merit @wod-revised:merit/eidetic-memory 2
+		Flaw @wod-revised:flaw/intolerance 1
+	}
+
+	Overrides {
+		Initiative 6 because "Celerity is currently active"
+	}
+
+	Notes {
+		Appearance "Auburn hair, severe glasses, ink-stained cuffs."
+		Personality "Precise, guarded, quietly kind."
+	}
+}

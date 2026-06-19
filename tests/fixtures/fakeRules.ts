@@ -1,6 +1,6 @@
-import { InMemoryRuleSource } from "../../src/rules/inMemoryRuleSource.ts";
-import type { RuleObject } from "../../src/rules/ruleObject.ts";
-import type { RuleRef } from "../../src/rules/ruleRef.ts";
+import { InMemoryRuleSource } from "../../src/common/rules/inMemoryRuleSource.ts";
+import type { RuleObject } from "../../src/common/rules/ruleObject.ts";
+import type { RuleRef } from "../../src/common/rules/ruleRef.ts";
 
 /**
  * Builds a fake rule object for a reference. Uses only placeholder mechanical
