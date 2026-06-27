@@ -13,8 +13,14 @@ Character "Isabeau Renault" {
 
 	Splat {
 		Gameline @wod-revised:gameline/vampire
+		Profile @wod-revised:creation/vampire
 		Clan @wod-revised:clan/tremere
 		Generation 12
+	}
+
+	Priorities {
+		Attributes primary physical secondary social tertiary mental
+		Abilities primary knowledges secondary talents tertiary skills
 	}
 
 	Attributes {
@@ -89,6 +95,25 @@ Character "Isabeau Renault" {
 	MeritsFlaws {
 		Merit @wod-revised:merit/eidetic-memory 2
 		Flaw @wod-revised:flaw/intolerance 1
+	}
+
+	History {
+		Entry creation-base {
+			Note "Priorities set; base dots assigned before freebies."
+		}
+
+		Entry creation-freebies {
+			Note "Fifteen freebie points spent."
+		}
+
+		Entry session {
+			XpGained 10 because "Survived the chantry purge"
+		}
+
+		Entry advancement {
+			XpSpent 4
+			Raise ability @wod-revised:ability/occult from 2 to 3 cost 4
+		}
 	}
 
 	Overrides {

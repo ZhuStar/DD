@@ -188,6 +188,37 @@ reference to the source owning its namespace; missing rules become
 examples. The same registry serves every system: a parser never touches a
 `RuleSource`; only the resolver does.
 
+### Derivation engine (Storyteller)
+
+The Storyteller system includes a first **derivation engine** that turns stored
+choices into computed values — the layer above resolution. Crucially, **the
+numbers live in rule data, not in code**: a `Splat.Profile` reference resolves
+to a *creation profile* rule object whose `data` carries the priority point
+allotments, freebie budget and per-dot costs, experience cost rules, and the
+generation table. Mortal vs. vampire differ only by which profile object they
+reference (`src/storyteller/rules.ts` parses that data at the `unknown`
+boundary).
+
+Given a profile, the engine (`src/storyteller/derive.ts`,
+`advancement.ts`) computes:
+
+- **Generation → stats**: blood-pool max, blood-per-turn, trait cap.
+- **Priorities → budgets**: primary/secondary/tertiary point allotments for
+  attributes and abilities.
+- **Costs**: `ExperienceCost` (`new` dot, or `multiplier × current`) and
+  `FreebieCost` (per-dot), both read from the profile.
+- **History replay** (`ReplayHistory`): walks the stored `History` ledger
+  (creation allocations → freebies → XP gains/spends) keeping a running
+  experience balance, and flags cost mismatches, overspends, freebie
+  over-budget, trait-cap violations, and creation allocations that don't match
+  the priority budgets — all as diagnostics.
+
+The character file stores only *choices and history* (priorities, Generation
+12, `Raise … from 2 to 3 cost 4`); derived values like "blood pool max 11" are
+never written to the file. See `tests/fixtures/isabeau.stc` (with `Priorities`
+and a `History` ledger) and `tests/fixtures/wodProfiles.ts` (illustrative,
+non-authoritative profile data).
+
 ## Development
 
 ```sh

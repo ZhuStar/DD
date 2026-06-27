@@ -13,6 +13,7 @@ export function CollectCharacterRefs(document: StorytellerDocument): CollectedRe
 
 	_pushOptional(_refs, _character.splat.gameLine, "splat.gameLine");
 	_pushOptional(_refs, _character.splat.archetype, "splat.archetype");
+	_pushOptional(_refs, _character.splat.profile, "splat.profile");
 	for (const [_key, _value] of Object.entries(_character.splat.extras)) {
 		if (_isRuleRef(_value)) {
 			_refs.push({ ref: _value, usage: `splat.${_key}` });
@@ -29,6 +30,12 @@ export function CollectCharacterRefs(document: StorytellerDocument): CollectedRe
 
 	for (const _mf of _character.meritsFlaws) {
 		_pushOptional(_refs, _mf.ref, `meritFlaw.${_mf.kind}`);
+	}
+
+	for (const _entry of _character.history) {
+		for (const _change of _entry.changes) {
+			_pushOptional(_refs, _change.ref, `history.${_entry.kind}`);
+		}
 	}
 
 	return _refs;
